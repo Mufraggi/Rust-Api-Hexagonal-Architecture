@@ -1,3 +1,4 @@
+use chrono::DateTime;
 use sqlx::postgres::PgPool;
 use sqlx::{Error, Pool, Postgres};
 
@@ -28,7 +29,7 @@ pub struct DbUser {
     id:String,
     first_name: String,
     last_name : String,
-    birthday_date: Date,
+    birthday_date: DateTime<chrono::Utc>,
     city: String
 }
 
@@ -56,7 +57,7 @@ pub trait Repository: Send + Sync {
     fn fetch_all(&self) -> anyhow::Result<Vec<DbUser>, FetchAllError>;
 
     fn fetch_one(&self, number: u32) -> anyhow::Result<DbUser, FetchOneError>;
-    fn update(&self, id: string, new_db_user: DbUser) -> anyhow::Result<DbUser, FetchAllError>;
+    fn update(&self, id: String, new_db_user: DbUser) -> anyhow::Result<DbUser, FetchAllError>;
     fn delete(&self, number: u32) -> anyhow::Result<(), DeleteError>;
 }
 
@@ -73,7 +74,7 @@ impl Repository for PostgresRepository {
         todo!()
     }
 
-    fn update(&self, id: string, new_db_user: DbUser) -> anyhow::Result<DbUser, FetchAllError> {
+    fn update(&self, id: String, new_db_user: DbUser) -> anyhow::Result<DbUser, FetchAllError> {
         todo!()
     }
 
