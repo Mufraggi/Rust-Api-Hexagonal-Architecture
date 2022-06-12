@@ -9,6 +9,17 @@ edition = "2021"
 
 sqlx = { features = ["postgres", "offline", "runtime-async-std-native-tls", "chrono"] }
 anyhow = "1.0"
-chrono="0.4.19"
+chrono= {  version = "0.4.19", features = ["serde"] }
 async-std = { version = "1.8.0", features = [ "attributes"] }
 futures = "0.3"
+uuid = { version ="1.1.2", features = [
+    "v4",
+    "fast-rng",
+    "macro-diagnostics","serde"
+] }
+async-trait = "0.1.56"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[dev-dependencies]
+random-string = "1.0.0"

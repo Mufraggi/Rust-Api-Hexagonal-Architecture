@@ -1,6 +1,10 @@
-use chrono::DateTime;
+use chrono::{DateTime, NaiveDate};
 use sqlx::postgres::PgPool;
-use sqlx::{Error, Pool, Postgres};
+use sqlx::{Pool, Postgres, query};
+use uuid::Uuid;
+use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
+
 
 pub enum InsertError {
     Conflict,
@@ -20,21 +24,22 @@ pub enum DeleteError {
     NotFound,
     Unknown,
 }
-
+//todo matez ca https://stackoverflow.com/questions/30389043/how-are-you-able-to-create-partially-initialised-structs
 pub struct PostgresRepository {
     db_pool: Pool<Postgres>,
 }
 
+#[derive(Deserialize, Serialize)]
 pub struct DbUser {
-    id:String,
+    id: Uuid,
     first_name: String,
-    last_name : String,
-    birthday_date: DateTime<chrono::Utc>,
-    city: String
+    last_name: String,
+    birthday_date: NaiveDate,
+    city: String,
 }
 
 impl PostgresRepository {
-    async fn new(mut self, url_db: String) -> Result<(),String> {
+    pub async  fn new(mut self, url_db: String) -> Result<(), String> {
         let tmp = PgPool::connect(&url_db).await;
         match tmp {
             Ok(value) => {
@@ -48,48 +53,74 @@ impl PostgresRepository {
     }
 }
 
-pub trait Repository: Send + Sync {
-    fn insert(
+#[async_trait]
+pub trait Repository {
+    async fn insert(
         &self,
-        number: u32,
-        name: String,
+        user: DbUser,
     ) -> anyhow::Result<DbUser, InsertError>;
-    fn fetch_all(&self) -> anyhow::Result<Vec<DbUser>, FetchAllError>;
+    async fn fetch_all(&self) -> anyhow::Result<Vec<DbUser>, FetchAllError>;
 
-    fn fetch_one(&self, number: u32) -> anyhow::Result<DbUser, FetchOneError>;
-    fn update(&self, id: String, new_db_user: DbUser) -> anyhow::Result<DbUser, FetchAllError>;
-    fn delete(&self, number: u32) -> anyhow::Result<(), DeleteError>;
+    async fn fetch_one(&self, number: u32) -> anyhow::Result<DbUser, FetchOneError>;
+    async fn update(&self, id: String, new_db_user: DbUser) -> anyhow::Result<DbUser, FetchAllError>;
+    async fn delete(&self, number: u32) -> anyhow::Result<(), DeleteError>;
 }
 
+#[async_trait]
 impl Repository for PostgresRepository {
-    fn insert(&self, number: u32, name: String) -> anyhow::Result<DbUser, InsertError> {
+    async fn insert(&self, db_user: DbUser) -> anyhow::Result<DbUser, InsertError> {
+        let rec = query!(
+        r#"
+INSERT INTO  users (id, first_name, last_name, birthday_date, city)
+        VALUES ( $1, $2, $3, $4, $5)
+        "#,
+            db_user.id.to_string(),
+        db_user.first_name,
+            db_user.last_name,
+                db_user.birthday_date,
+                db_user.city
+    )
+            .fetch_one(&self.db_pool)
+            .await;
+        Ok(db_user)
+    }
+
+    async fn fetch_all(&self) -> anyhow::Result<Vec<DbUser>, FetchAllError> {
         todo!()
     }
 
-    fn fetch_all(&self) -> anyhow::Result<Vec<DbUser>, FetchAllError> {
+    async fn fetch_one(&self, number: u32) -> anyhow::Result<DbUser, FetchOneError> {
         todo!()
     }
 
-    fn fetch_one(&self, number: u32) -> anyhow::Result<DbUser, FetchOneError> {
+    async fn update(&self, id: String, new_db_user: DbUser) -> anyhow::Result<DbUser, FetchAllError> {
         todo!()
     }
 
-    fn update(&self, id: String, new_db_user: DbUser) -> anyhow::Result<DbUser, FetchAllError> {
-        todo!()
-    }
-
-    fn delete(&self, number: u32) -> anyhow::Result<(), DeleteError> {
+    async fn delete(&self, number: u32) -> anyhow::Result<(), DeleteError> {
         todo!()
     }
 }
-
 
 
 #[cfg(test)]
 mod tests {
+    use chrono::NaiveDate;
+    use uuid::Uuid;
+    use crate::{DbUser, PostgresRepository};
+    use random_string::generate;
+
     #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
+    fn create_works() {
+        let charset = "abcdefghijkl";
+        let user = DbUser{
+            id: Uuid::new_v4(),
+            last_name: generate(6, charset),
+            first_name:generate(6, charset),
+            city: generate(6, charset),
+            birthday_date: NaiveDate::from_ymd(2015, 3, 14),
+        };
+       //let repo = PostgresRepository::new("");
+
     }
 }
