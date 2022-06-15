@@ -1,8 +1,7 @@
-use std::fmt;
+
 use std::fmt::Debug;
-use std::future::Future;
-use std::str::FromStr;
-use chrono::{DateTime, NaiveDate};
+
+use chrono::{ NaiveDate};
 use sqlx::postgres::PgPool;
 use sqlx::{Pool, Postgres, query};
 use uuid::Uuid;
@@ -43,11 +42,11 @@ pub struct DbUser {
 }
 
 impl PostgresRepository {
-    pub async  fn new_pool(url_db: &str) -> Result<PostgresRepository, ()> {
+    pub async fn new_pool(url_db: &str) -> Result<PostgresRepository, ()> {
         let tmp = PgPool::connect(&url_db).await;
         match tmp {
             Ok(value) => {
-                Ok(Self{db_pool:Some(value)})
+                Ok(Self { db_pool: Some(value) })
             }
             Err(err) => {
                 Err(())
@@ -111,8 +110,6 @@ INSERT INTO  users (id, first_name, last_name, birthday_date, city)
 #[cfg(test)]
 mod tests {
     use std::borrow::Borrow;
-    use std::fmt::Debug;
-    use std::str::FromStr;
     use chrono::NaiveDate;
     use uuid::Uuid;
     use crate::{DbUser, PostgresRepository, Repository};
@@ -120,27 +117,27 @@ mod tests {
 
     #[tokio::test]
     async fn create_works()
-       {
+    {
         let charset = "abcdefghijkl";
-        let user = DbUser{
+        let user = DbUser {
             id: Uuid::new_v4(),
             last_name: generate(6, charset),
-            first_name:generate(6, charset),
+            first_name: generate(6, charset),
             city: generate(6, charset),
+            birthday_date: NaiveDate::from_ymd(2015, 3, 14),
+        };
+        let user_res = DbUser {
+            id: user.id.clone(),
+            last_name: user.last_name.clone(),
+            first_name:  user.first_name.clone(),
+            city: user.city.clone(),
             birthday_date: NaiveDate::from_ymd(2015, 3, 14),
         };
         let url = "postgres://postgres:somePassword@localhost:5432/postgres";
         let repo = PostgresRepository::new_pool(url).await.unwrap();
         let res = repo.insert(user).await;
         let user_create = res.unwrap();
-           let userRes = DbUser{
-               id: Uuid::new_v4(),
-               last_name: generate(6, charset),
-               first_name:generate(6, charset),
-               city: generate(6, charset),
-               birthday_date: NaiveDate::from_ymd(2015, 3, 14),
-           };
-        assert_eq!(user_create.eq(&userRes), true)
 
+        assert_eq!(user_create.eq(&user_res), true)
     }
 }
