@@ -1,3 +1,7 @@
+use std::fmt;
+use std::fmt::Debug;
+use std::future::Future;
+use std::str::FromStr;
 use chrono::{DateTime, NaiveDate};
 use sqlx::postgres::PgPool;
 use sqlx::{Pool, Postgres, query};
@@ -5,7 +9,7 @@ use uuid::Uuid;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
-
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum InsertError {
     Conflict,
     Unknown,
@@ -24,12 +28,12 @@ pub enum DeleteError {
     NotFound,
     Unknown,
 }
-//todo matez ca https://stackoverflow.com/questions/30389043/how-are-you-able-to-create-partially-initialised-structs
+
 pub struct PostgresRepository {
-    db_pool: Pool<Postgres>,
+    db_pool: Option<Pool<Postgres>>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub struct DbUser {
     id: Uuid,
     first_name: String,
@@ -39,15 +43,14 @@ pub struct DbUser {
 }
 
 impl PostgresRepository {
-    pub async  fn new(mut self, url_db: String) -> Result<(), String> {
+    pub async  fn new_pool(url_db: &str) -> Result<PostgresRepository, ()> {
         let tmp = PgPool::connect(&url_db).await;
         match tmp {
             Ok(value) => {
-                self.db_pool = value;
-                Ok(())
+                Ok(Self{db_pool:Some(value)})
             }
             Err(err) => {
-                Err("blabla".to_string())
+                Err(())
             }
         }
     }
@@ -56,7 +59,7 @@ impl PostgresRepository {
 #[async_trait]
 pub trait Repository {
     async fn insert(
-        &self,
+        self,
         user: DbUser,
     ) -> anyhow::Result<DbUser, InsertError>;
     async fn fetch_all(&self) -> anyhow::Result<Vec<DbUser>, FetchAllError>;
@@ -68,7 +71,9 @@ pub trait Repository {
 
 #[async_trait]
 impl Repository for PostgresRepository {
-    async fn insert(&self, db_user: DbUser) -> anyhow::Result<DbUser, InsertError> {
+    async fn insert(self, db_user: DbUser) -> anyhow::Result<DbUser, InsertError>
+    {
+        let db_pool = self.db_pool.as_ref().unwrap();
         let rec = query!(
         r#"
 INSERT INTO  users (id, first_name, last_name, birthday_date, city)
@@ -80,7 +85,7 @@ INSERT INTO  users (id, first_name, last_name, birthday_date, city)
                 db_user.birthday_date,
                 db_user.city
     )
-            .fetch_one(&self.db_pool)
+            .fetch_one(db_pool)
             .await;
         Ok(db_user)
     }
@@ -105,13 +110,17 @@ INSERT INTO  users (id, first_name, last_name, birthday_date, city)
 
 #[cfg(test)]
 mod tests {
+    use std::borrow::Borrow;
+    use std::fmt::Debug;
+    use std::str::FromStr;
     use chrono::NaiveDate;
     use uuid::Uuid;
-    use crate::{DbUser, PostgresRepository};
+    use crate::{DbUser, PostgresRepository, Repository};
     use random_string::generate;
 
-    #[test]
-    fn create_works() {
+    #[tokio::test]
+    async fn create_works()
+       {
         let charset = "abcdefghijkl";
         let user = DbUser{
             id: Uuid::new_v4(),
@@ -120,7 +129,18 @@ mod tests {
             city: generate(6, charset),
             birthday_date: NaiveDate::from_ymd(2015, 3, 14),
         };
-       //let repo = PostgresRepository::new("");
+        let url = "postgres://postgres:somePassword@localhost:5432/postgres";
+        let repo = PostgresRepository::new_pool(url).await.unwrap();
+        let res = repo.insert(user).await;
+        let user_create = res.unwrap();
+           let userRes = DbUser{
+               id: Uuid::new_v4(),
+               last_name: generate(6, charset),
+               first_name:generate(6, charset),
+               city: generate(6, charset),
+               birthday_date: NaiveDate::from_ymd(2015, 3, 14),
+           };
+        assert_eq!(user_create.eq(&userRes), true)
 
     }
 }
