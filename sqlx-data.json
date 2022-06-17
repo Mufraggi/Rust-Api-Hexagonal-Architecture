@@ -1,9 +1,17 @@
 {
   "db": "PostgreSQL",
-  "f122e51efaa3279b95da63768204a3428400ba67e362648d01a8b7121d5fdfa6": {
+  "0ba65d0004064971ef33b25be034c2477b4a4f22003e750af5161ae8d1512523": {
     "describe": {
-      "columns": [],
-      "nullable": [],
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        }
+      ],
+      "nullable": [
+        false
+      ],
       "parameters": {
         "Left": [
           "Varchar",
@@ -14,6 +22,6 @@
         ]
       }
     },
-    "query": "\nINSERT INTO  users (id, first_name, last_name, birthday_date, city)\n        VALUES ( $1, $2, $3, $4, $5)\n        "
+    "query": "\nINSERT INTO  users (id, first_name, last_name, birthday_date, city)\n        VALUES ( $1, $2, $3, $4, $5) returning id\n        "
   }
 }
