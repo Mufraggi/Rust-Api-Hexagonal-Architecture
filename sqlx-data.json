@@ -1,0 +1,27 @@
+{
+  "db": "PostgreSQL",
+  "0ba65d0004064971ef33b25be034c2477b4a4f22003e750af5161ae8d1512523": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Date",
+          "Varchar"
+        ]
+      }
+    },
+    "query": "\nINSERT INTO  users (id, first_name, last_name, birthday_date, city)\n        VALUES ( $1, $2, $3, $4, $5) returning id\n        "
+  }
+}
