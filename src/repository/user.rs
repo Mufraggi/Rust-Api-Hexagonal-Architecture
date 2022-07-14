@@ -241,7 +241,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn get_notFound() {
+    async fn get_not_found() {
         let url = "postgres://postgres:somePassword@localhost:5432/postgres";
         let charset = "abcdefghijkl";
         let id = Uuid::new_v4().to_string();
