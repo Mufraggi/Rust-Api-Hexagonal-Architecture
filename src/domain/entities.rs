@@ -7,7 +7,7 @@ pub struct BirthdayDate(NaiveDate);
 
 impl From<BirthdayDate> for NaiveDate {
     fn from(t: BirthdayDate) -> Self {
-        NaiveDate::from(t)
+        t.0
     }
 }
 
@@ -16,9 +16,9 @@ impl TryFrom<String> for BirthdayDate {
 
     fn try_from(n: String) -> Result<Self, Self::Error> {
         let parse_from_str = NaiveDate::parse_from_str;
-        match parse_from_str(&n, "%Y-%m-%d").is_ok()  {
-            true => {Ok(Self(n.parse().unwrap()))}
-            false => { Err(())}
+        match parse_from_str(&n, "%Y-%m-%d")  {
+            Ok(date) => {Ok(Self(date))},
+            Err(_) => {Err(())}
         }
 
     }
@@ -30,6 +30,12 @@ impl BirthdayDate {
     pub fn date() -> Self {
         let parse_from_str = NaiveDate::parse_from_str;
         Self(parse_from_str("1994-10-03", "%Y-%m-%d").unwrap())
+    }
+    pub fn  date_native() -> NaiveDate {
+        NaiveDate::parse_from_str("1994-10-03", "%Y-%m-%d").unwrap()
+    }
+    pub fn date_string() -> &'static str {
+        "1994-10-03"
     }
 
     pub fn bad() -> Self {

@@ -6,7 +6,7 @@ mod domain;
 
 #[tokio::main]
  async fn main() {
-    let url = "postgres://postgres:somePassword@localhost:5432/postgres";
+  /*  let url = "postgres://postgres:somePassword@localhost:5432/postgres";
      let repository = PostgresRepository::new_pool(url).await.unwrap();
-    let repo =Arc::new(repository);
+    let repo =Arc::new(repository);*/
 }
