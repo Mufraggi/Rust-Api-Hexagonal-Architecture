@@ -33,8 +33,7 @@ impl BirthdayDate {
     }
     pub fn  date_native() -> NaiveDate {
         NaiveDate::parse_from_str("1994-10-03", "%Y-%m-%d").unwrap()
-    }
-    pub fn date_string() -> &'static str {
+    }    pub fn date_string() -> &'static str {
         "1994-10-03"
     }
 
@@ -147,23 +146,3 @@ impl CityName {
 }
 
 
-
-#[derive(Clone)]
-pub struct InputUser {
-    pub first_name: FirstName,
-    pub last_name: LastName,
-    pub birthday_date: NaiveDate,
-    pub city: CityName,
-
-}
-
-impl InputUser {
-    pub fn new(first_name: FirstName, last_name: LastName, birthday_date: NaiveDate, city: CityName) -> Self {
-        Self {
-            first_name,
-            last_name,
-            birthday_date,
-            city,
-        }
-    }
-}
