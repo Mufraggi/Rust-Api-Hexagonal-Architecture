@@ -1,6 +1,8 @@
 use std::cmp::PartialEq;
 use std::convert::TryFrom;
+use std::fmt::Display;
 use chrono::{NaiveDate, ParseResult};
+use uuid::{Error, Uuid};
 
 #[derive(Clone)]
 pub struct BirthdayDate(NaiveDate);
@@ -16,11 +18,10 @@ impl TryFrom<String> for BirthdayDate {
 
     fn try_from(n: String) -> Result<Self, Self::Error> {
         let parse_from_str = NaiveDate::parse_from_str;
-        match parse_from_str(&n, "%Y-%m-%d")  {
-            Ok(date) => {Ok(Self(date))},
-            Err(_) => {Err(())}
+        match parse_from_str(&n, "%Y-%m-%d") {
+            Ok(date) => { Ok(Self(date)) }
+            Err(_) => { Err(()) }
         }
-
     }
 }
 
@@ -31,9 +32,10 @@ impl BirthdayDate {
         let parse_from_str = NaiveDate::parse_from_str;
         Self(parse_from_str("1994-10-03", "%Y-%m-%d").unwrap())
     }
-    pub fn  date_native() -> NaiveDate {
+    pub fn date_native() -> NaiveDate {
         NaiveDate::parse_from_str("1994-10-03", "%Y-%m-%d").unwrap()
-    }    pub fn date_string() -> &'static str {
+    }
+    pub fn date_string() -> &'static str {
         "1994-10-03"
     }
 
@@ -91,8 +93,6 @@ impl TryFrom<String> for LastName {
 }
 
 
-
-
 impl From<LastName> for String {
     fn from(n: LastName) -> Self {
         n.0
@@ -109,8 +109,6 @@ impl LastName {
         Self(String::from(""))
     }
 }
-
-
 
 
 #[derive(Clone)]
@@ -146,3 +144,39 @@ impl CityName {
 }
 
 
+#[derive(Clone, Debug)]
+pub struct UserId(Uuid);
+
+impl From<UserId> for Uuid {
+    fn from(t: UserId) -> Self {
+        t.0
+    }
+}
+
+impl UserId {
+    pub fn my_to_String(&self) -> String {
+        self.0.to_string()
+    }
+}
+
+impl TryFrom<String> for UserId {
+    type Error = ();
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        match Uuid::parse_str(s.as_str()) {
+            Ok(uuid) => { Ok(Self(uuid)) }
+            Err(_) => { Err(()) }
+        }
+    }
+}
+
+#[cfg(test)]
+impl UserId {
+    pub fn id() -> Self {
+        Self(Uuid::new_v4())
+    }
+
+    pub fn bad() -> Self {
+        Self("".parse().unwrap())
+    }
+}
