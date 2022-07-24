@@ -8,8 +8,9 @@ use actix_web::middleware::Logger;
 use actix_web::web::Data;
 use crate::repository::user::Repository;
 use crate::api::health::health;
-use crate::api::user::create_user;
+use crate::api::user::{create_user, user_service};
 use crate::PostgresRepository;
+
 
 
 pub async fn serve(url: &str, repo: PostgresRepository) -> std::io::Result<()> {
@@ -20,9 +21,9 @@ pub async fn serve(url: &str, repo: PostgresRepository) -> std::io::Result<()> {
             .service(
                 web::scope("/health")
                     .route("", web::get().to(health))
-            ).service(
+            ).service(user_service(&repo))/*.service(
             web::scope("/user")
-                .route("", web::post().to(create_user::serve)).app_data(repo.clone()))
+                .route("", web::post().to(create_user::serve)).app_data(repo.clone()))*/
     }).bind((url, 8080))?
         .run().await
 }

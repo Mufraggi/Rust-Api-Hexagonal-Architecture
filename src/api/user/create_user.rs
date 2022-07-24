@@ -10,7 +10,7 @@ use crate::domain::create_user::Error;
 use crate::PostgresRepository;
 
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize,Serialize)]
 pub struct Request {
     pub first_name: String,
     pub last_name: String,
@@ -18,7 +18,7 @@ pub struct Request {
     pub city: String,
 }
 
-#[derive(Debug, Serialize )]
+#[derive(Debug, Serialize, Deserialize )]
 pub struct Response {
     pub id: String,
     pub first_name: String,
@@ -47,5 +47,76 @@ pub async fn serve(repo: Data< PostgresRepository>, req: web::Json<Request>) -> 
         Err(create_user::Error::BadRequest) => HttpResponse::BadRequest().finish(),
         Err(create_user::Error::Conflict) => HttpResponse::Conflict().finish(),
         Err(create_user::Error::Unknown) => HttpResponse::Conflict().finish(),
+    }
+}
+
+#[cfg(test)]
+impl Request {
+    pub fn good() -> Self {
+        Self{
+            first_name: "hugo".to_string(),
+            last_name: "muf".to_string(),
+            birthday_date: "1994-10-03".to_string(),
+            city: "nice".to_string()
+        }
+    }
+
+    pub fn bad() -> Self {
+        Self{
+            first_name: "".to_string(),
+            last_name: "".to_string(),
+            birthday_date: "1994-10-03".to_string(),
+            city: "nice".to_string()
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use actix_web::{App, test, web, http::header::ContentType};
+    use actix_web::body::to_bytes;
+    use actix_web::error::ErrorBadRequest;
+    use actix_web::http::{header, StatusCode};
+    use actix_web::web::Data;
+    use chrono::NaiveDate;
+    use crate::api::user::create_user::{Request, Response, serve};
+    use crate::PostgresRepository;
+
+
+    #[actix_web::test]
+    async fn test_create_user_route_ok() {
+        let url = "postgres://postgres:somePassword@localhost:5432/postgres";
+        let repository = PostgresRepository::new_pool(url).await.unwrap();
+        let repo = Data::new(repository);
+        let mut app  =
+            test::init_service(App::new()
+                .route("/", web::post().to(serve))
+                .app_data(repo)).await;
+        let res = test::TestRequest::post()
+            .uri("/").set_json(Request::good())
+            .send_request(&mut app).await;
+        assert!(res.status().is_success());
+        let result:Response = test::read_body_json(res).await;
+        let excepted = Request::good();
+
+        assert_eq!(result.first_name, excepted.first_name);
+        assert_eq!(result.last_name, excepted.last_name);
+        assert_eq!(result.birthday_date,  NaiveDate::parse_from_str(&excepted.birthday_date, "%Y-%m-%d").unwrap());
+        assert_eq!(result.city, excepted.city);
+
+    }
+    #[actix_web::test]
+    async fn test_create_user_route_fail_bad_request() {
+        let url = "postgres://postgres:somePassword@localhost:5432/postgres";
+        let repository = PostgresRepository::new_pool(url).await.unwrap();
+        let repo = Data::new(repository);
+        let mut app  =
+            test::init_service(App::new()
+                .route("/", web::post().to(serve))
+                .app_data(repo)).await;
+        let res = test::TestRequest::post()
+            .uri("/").set_json(Request::bad())
+            .send_request(&mut app).await;
+        assert_eq!(res.status(), StatusCode::BAD_REQUEST);
     }
 }
