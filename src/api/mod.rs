@@ -17,10 +17,10 @@ pub async fn serve(url: &str, repo: PostgresRepository) -> std::io::Result<()> {
     HttpServer::new(move|| {
         App::new()
             .wrap(Logger::default())
-            /*.service(
+            .service(
                 web::scope("/health")
                     .route("", web::get().to(health))
-            )*/.service(
+            ).service(
             web::scope("/user")
                 .route("", web::post().to(create_user::serve)).app_data(repo.clone()))
     }).bind((url, 8080))?
