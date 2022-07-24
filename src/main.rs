@@ -9,6 +9,5 @@ mod api;
 async fn main() -> std::io::Result<()> {
     let url = "postgres://postgres:somePassword@localhost:5432/postgres";
     let repository = PostgresRepository::new_pool(url).await.unwrap();
-    let repo = Arc::new(repository);
-    api::serve("localhost", repo).await
+    api::serve("localhost", repository).await
 }
