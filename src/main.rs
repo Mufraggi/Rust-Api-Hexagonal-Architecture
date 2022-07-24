@@ -3,10 +3,12 @@ use crate::repository::user::PostgresRepository;
 
 mod repository;
 mod domain;
+mod api;
 
-#[tokio::main]
- async fn main() {
-  /*  let url = "postgres://postgres:somePassword@localhost:5432/postgres";
-     let repository = PostgresRepository::new_pool(url).await.unwrap();
-    let repo =Arc::new(repository);*/
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    let url = "postgres://postgres:somePassword@localhost:5432/postgres";
+    let repository = PostgresRepository::new_pool(url).await.unwrap();
+    let repo = Arc::new(repository);
+    api::serve("localhost", repo).await
 }
