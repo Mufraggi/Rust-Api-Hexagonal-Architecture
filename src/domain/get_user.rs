@@ -1,6 +1,8 @@
 use std::sync::Arc;
+use actix_web::web::Data;
 use chrono::NaiveDate;
 use crate::domain::entities::UserId;
+use crate::PostgresRepository;
 use crate::repository::user::{DbUser, FetchOneError, InsertError, Repository};
 
 #[derive(Debug)]
@@ -24,7 +26,7 @@ pub enum Error {
     Unknown,
 }
 
-pub async fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response, Error> {
+pub async fn execute(repo: Data<PostgresRepository>, req: Request) -> Result<Response, Error> {
     match (UserId::try_from(req.id)) {
         Ok(userId) => {
             let res = repo.get(userId.my_to_String()).await;
@@ -47,7 +49,7 @@ pub async fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
+    use actix_web::web::Data;
     use crate::domain::entities::{BirthdayDate, CityName, FirstName, LastName, UserId};
     use crate::domain::get_user::{Error, execute, Request};
     use crate::PostgresRepository;
@@ -57,7 +59,7 @@ mod tests {
     async fn get_user_domain_works() {
         let url = "postgres://postgres:somePassword@localhost:5432/postgres";
         let repository = PostgresRepository::new_pool(url).await.unwrap();
-        let repo = Arc::new(repository);
+        let repo = Data::new(repository);
 
         let dbUser = &repo.insert(DbUser {
             id:UserId::id().my_to_String(),
@@ -79,7 +81,7 @@ mod tests {
     async fn get_user_domain_fail_notfound() {
         let url = "postgres://postgres:somePassword@localhost:5432/postgres";
         let repository = PostgresRepository::new_pool(url).await.unwrap();
-        let repo = Arc::new(repository);
+        let repo = Data::new(repository);
 
 
         let id =UserId::id().my_to_String();
@@ -91,7 +93,7 @@ mod tests {
     async fn get_user_domain_fail_badRequest() {
         let url = "postgres://postgres:somePassword@localhost:5432/postgres";
         let repository = PostgresRepository::new_pool(url).await.unwrap();
-        let repo = Arc::new(repository);
+        let repo = Data::new(repository);
 
 
         let request = Request { id: "".parse().unwrap() };
