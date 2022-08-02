@@ -21,9 +21,7 @@ pub async fn serve(url: &str, repo: PostgresRepository) -> std::io::Result<()> {
             .service(
                 web::scope("/health")
                     .route("", web::get().to(health))
-            ).service(user_service(&repo))/*.service(
-            web::scope("/user")
-                .route("", web::post().to(create_user::serve)).app_data(repo.clone()))*/
+            ).service(user_service(&repo))
     }).bind((url, 8080))?
         .run().await
 }

@@ -81,6 +81,13 @@ mod tests {
     use chrono::NaiveDate;
     use crate::api::user::create_user::{Request, Response, serve};
     use crate::PostgresRepository;
+    use serde::Deserialize;
+    use serde::Serialize;
+
+    #[derive( Deserialize, Serialize)]
+    pub struct Fail {
+        pub id: String,
+    }
 
 
     #[actix_web::test]
@@ -103,8 +110,8 @@ mod tests {
         assert_eq!(result.last_name, excepted.last_name);
         assert_eq!(result.birthday_date,  NaiveDate::parse_from_str(&excepted.birthday_date, "%Y-%m-%d").unwrap());
         assert_eq!(result.city, excepted.city);
-
     }
+
     #[actix_web::test]
     async fn test_create_user_route_fail_bad_request() {
         let url = "postgres://postgres:somePassword@localhost:5432/postgres";
@@ -116,6 +123,21 @@ mod tests {
                 .app_data(repo)).await;
         let res = test::TestRequest::post()
             .uri("/").set_json(Request::bad())
+            .send_request(&mut app).await;
+        assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+    }
+
+    #[actix_web::test]
+    async fn test_create_user_route_vwith_bad_req_fail_bad_request() {
+        let url = "postgres://postgres:somePassword@localhost:5432/postgres";
+        let repository = PostgresRepository::new_pool(url).await.unwrap();
+        let repo = Data::new(repository);
+        let mut app  =
+            test::init_service(App::new()
+                .route("/", web::post().to(serve))
+                .app_data(repo)).await;
+        let res = test::TestRequest::post()
+            .uri("/").set_json(Fail{id: "aaa".parse().unwrap() })
             .send_request(&mut app).await;
         assert_eq!(res.status(), StatusCode::BAD_REQUEST);
     }

@@ -41,8 +41,9 @@ pub async fn serve(repo: Data<PostgresRepository>, path: web::Path<Param>) -> im
 #[cfg(test)]
 mod tests {
     use std::fmt::format;
-    use actix_web::{App, test, web, http::header::ContentType};
+    use actix_web::{App, test, web, http::header::ContentType, Responder};
     use actix_web::body::to_bytes;
+    use actix_web::dev::ServiceResponse;
     use actix_web::error::ErrorBadRequest;
     use actix_web::http::{header, StatusCode};
     use actix_web::web::Data;
@@ -51,6 +52,7 @@ mod tests {
     use uuid::Uuid;
     use crate::api::user::create_user::{Request, Response};
     use crate::api::user::get_user::{serve};
+    use crate::domain::get_user;
     use crate::PostgresRepository;
     use crate::repository::user::{DbUser, Repository};
 
@@ -81,5 +83,28 @@ mod tests {
         assert_eq!(result.last_name, res_insert.last_name);
         assert_eq!(result.birthday_date,  res_insert.birthday_date);
         assert_eq!(result.city, res_insert.city);
+    }
+    #[actix_web::test]
+    async fn test_get_user_route_fail_badurl() {
+        let charset = "abcdefghijkl";
+        let url = "postgres://postgres:somePassword@localhost:5432/postgres";
+        let repository = PostgresRepository::new_pool(url).await.unwrap();
+        let id = Uuid::new_v4().to_string();
+        let db_user =  DbUser {
+            id: id.clone(),
+            last_name: generate(6, charset),
+            first_name: generate(6, charset),
+            city: generate(6, charset),
+            birthday_date: NaiveDate::from_ymd(2015, 3, 14),
+        };
+        let res_insert = repository.insert(db_user).await.unwrap();
+        let repo = Data::new(repository);
+        let mut app = test::init_service(
+            App::new()
+                .route("/{id}", web::get().to(serve))
+                .app_data(repo)).await;
+       let res= test::TestRequest::get().uri("/").send_request(&app).await;
+
+        assert_eq!( res.status(),StatusCode::NOT_FOUND);
     }
 }
