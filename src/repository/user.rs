@@ -6,27 +6,33 @@ use sqlx::postgres::PgSeverity::Log;
 use sqlx::postgres::{PgPool, PgRow};
 use sqlx::{query, query_as, Error, FromRow, Pool, Postgres, Row};
 use std::any::TypeId;
+use std::borrow::Borrow;
 use std::fmt::Debug;
 use uuid::{uuid, Uuid};
 
-#[derive(Deserialize, Serialize, Debug,PartialEq)]
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum InsertError {
     Conflict,
     Unknown,
 }
 
-#[derive(Deserialize, Serialize, Debug,PartialEq)]
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum FetchAllError {
     Unknown,
 }
 
-#[derive(Deserialize, Serialize, Debug,PartialEq)]
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum FetchOneError {
     NotFound,
     Unknown,
 }
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
+pub enum UpdateError {
+    NotFound,
+    Unknown,
+}
 
-#[derive(Deserialize, Serialize, Debug,PartialEq)]
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum DeleteError {
     NotFound,
     Unknown,
@@ -85,7 +91,7 @@ pub trait Repository {
         &self,
         id: String,
         new_db_user: DbUser,
-    ) -> anyhow::Result<DbUser, FetchAllError>;
+    ) -> anyhow::Result<DbUser, UpdateError>;
     async fn delete(&self, id: String) -> anyhow::Result<(), DeleteError>;
 }
 
@@ -152,8 +158,24 @@ INSERT INTO  users (id, first_name, last_name, birthday_date, city)
         &self,
         id: String,
         new_db_user: DbUser,
-    ) -> anyhow::Result<DbUser, FetchAllError> {
-        todo!()
+    ) -> anyhow::Result<DbUser, UpdateError> {
+        let db_pool = self.db_pool.as_ref().unwrap();
+        let res = query_as::<_, DbUser>("
+        UPDATE users SET first_name = $1, last_name = $2, birthday_date = $3, city = $4 where id = $5 RETURNING id, first_name, last_name, birthday_date, city
+    ").bind(new_db_user.first_name)
+            .bind(new_db_user.last_name)
+            .bind(new_db_user.birthday_date)
+            .bind(new_db_user.city)
+            .bind(id)
+            .fetch_one(db_pool).await;
+        match res {
+            Ok(user) =>
+                Ok(user),
+            Err(Error::RowNotFound) =>
+                Err(UpdateError::NotFound),
+            Err(_) =>
+                Err(UpdateError::Unknown)
+        }
     }
 
     async fn delete(&self, id: String) -> anyhow::Result<(), DeleteError> {
@@ -179,10 +201,11 @@ mod tests {
     use std::borrow::Borrow;
     use std::collections::HashMap;
     use std::sync::Arc;
+    use actix_web::web::Data;
     use serde_json::Value::Array;
     use sqlx::{Pool, Postgres};
     use uuid::{uuid, Uuid};
-    use crate::repository::user::{DbUser, FetchOneError, InsertError, PostgresRepository, Repository};
+    use crate::repository::user::{DbUser, FetchAllError, FetchOneError, InsertError, PostgresRepository, Repository, UpdateError};
 
     #[tokio::test]
     async fn create_works() {
@@ -295,7 +318,6 @@ mod tests {
         }
 
 
-
         for expectedUser in users {
             let a = hashmap.get(expectedUser.id.as_str()).unwrap();
             assert_eq!(expectedUser.id, a.id);
@@ -336,6 +358,78 @@ mod tests {
         // assert_eq!(user_res.eq(&res1), true)
     }
 
+    #[tokio::test]
+    async fn update_work() {
+        let charset = "abcdefghijkl";
+        let id = Uuid::new_v4().to_string();
+        let user = DbUser {
+            id: id.clone(),
+            last_name: generate(6, charset),
+            first_name: generate(6, charset),
+            city: generate(6, charset),
+            birthday_date: NaiveDate::from_ymd(2015, 3, 14),
+        };
+        let user_res = DbUser {
+            id: user.id.clone(),
+            last_name: user.last_name.clone(),
+            first_name: user.first_name.clone(),
+            city: user.city.clone(),
+            birthday_date: NaiveDate::from_ymd(2015, 3, 14),
+        };
+        let user_update = DbUser {
+            id: id.clone(),
+            last_name: generate(6, charset),
+            first_name: generate(6, charset),
+            city: generate(6, charset),
+            birthday_date: NaiveDate::from_ymd(2015, 3, 14),
+        };
+
+        let user_updated = DbUser {
+            id: user_update.id.clone(),
+            last_name: user_update.last_name.clone(),
+            first_name: user_update.first_name.clone(),
+            city: user_update.city.clone(),
+            birthday_date: NaiveDate::from_ymd(2015, 3, 14),
+        };
+
+        let url = "postgres://postgres:somePassword@localhost:5432/postgres";
+
+
+
+        let mut repo = Data::new(PostgresRepository::new_pool(url).await.unwrap());
+        repo.insert(user).await;
+        repo.get(id.clone()).await;
+        let res = repo.update(id, user_update).await.unwrap();
+
+        assert_eq!(user_updated.id, res.id);
+        assert_eq!(user_updated.city, res.city);
+        assert_eq!(user_updated.birthday_date, res.birthday_date);
+        assert_eq!(user_updated.last_name, res.last_name);
+        assert_eq!(user_updated.first_name, res.first_name);
+    }
+
+    #[tokio::test]
+    async fn update_unknown() {
+        let charset = "abcdefghijkl";
+        let id = Uuid::new_v4().to_string();
+        let user_update = DbUser {
+            id: id.clone(),
+            last_name: generate(6, charset),
+            first_name: generate(6, charset),
+            city: generate(6, charset),
+            birthday_date: NaiveDate::from_ymd(2015, 3, 14),
+        };
+
+        let url = "postgres://postgres:somePassword@localhost:5432/postgres";
+
+
+
+        let mut repo = Data::new(PostgresRepository::new_pool(url).await.unwrap());
+        let res = repo.update(id, user_update).await;
+        assert_eq!(res.err().unwrap(), UpdateError::NotFound);
+    }
+
+
 
 
     async fn insert_users_test() -> Vec<DbUser> {
@@ -357,7 +451,6 @@ mod tests {
         }
         users
     }
-
 
 
     async fn delete_all(x: &Pool<Postgres>) {

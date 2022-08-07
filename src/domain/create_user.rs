@@ -81,7 +81,7 @@ mod tests {
     use super::*;
     use crate::domain::entities::{BirthdayDate, CityName, FirstName, LastName};
     use crate::PostgresRepository;
-    use crate::repository::user::{DeleteError, FetchAllError, FetchOneError};
+    use crate::repository::user::{DeleteError, FetchAllError, FetchOneError, UpdateError};
     use async_trait::async_trait;
 
     struct RepoMock {}
@@ -106,7 +106,7 @@ mod tests {
             todo!()
         }
 
-        async fn update(&self, id: String, new_db_user: DbUser) -> anyhow::Result<DbUser, FetchAllError> {
+        async fn update(&self, id: String, new_db_user: DbUser) -> anyhow::Result<DbUser, UpdateError> {
             todo!()
         }
 
