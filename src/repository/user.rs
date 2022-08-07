@@ -438,7 +438,7 @@ mod tests {
 
 
 
-    async fn insert_users_test() -> Vec<DbUser> {
+    pub async  fn insert_users_test() -> Vec<DbUser> {
         let url = "postgres://postgres:somePassword@localhost:5432/postgres";
         let repo = PostgresRepository::new_pool(url).await.unwrap();
         let mut users = Vec::new();
