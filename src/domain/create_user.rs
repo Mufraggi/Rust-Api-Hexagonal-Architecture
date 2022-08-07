@@ -110,7 +110,7 @@ mod tests {
             todo!()
         }
 
-        async fn delete(&self, number: u32) -> anyhow::Result<(), DeleteError> {
+        async fn delete(&self, id: String) -> anyhow::Result<(), DeleteError> {
             todo!()
         }
     }

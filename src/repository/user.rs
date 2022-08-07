@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use chrono::NaiveDate;
-use futures::future::err;
+use futures::future::{err, ok};
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgSeverity::Log;
 use sqlx::postgres::{PgPool, PgRow};
@@ -9,22 +9,24 @@ use std::any::TypeId;
 use std::fmt::Debug;
 use uuid::{uuid, Uuid};
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug,PartialEq)]
 pub enum InsertError {
     Conflict,
     Unknown,
 }
 
+#[derive(Deserialize, Serialize, Debug,PartialEq)]
 pub enum FetchAllError {
     Unknown,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug,PartialEq)]
 pub enum FetchOneError {
     NotFound,
     Unknown,
 }
 
+#[derive(Deserialize, Serialize, Debug,PartialEq)]
 pub enum DeleteError {
     NotFound,
     Unknown,
@@ -35,7 +37,7 @@ pub struct PostgresRepository {
     db_pool: Option<Pool<Postgres>>,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub struct DbUser {
     pub id: String,
     pub first_name: String,
@@ -84,7 +86,7 @@ pub trait Repository {
         id: String,
         new_db_user: DbUser,
     ) -> anyhow::Result<DbUser, FetchAllError>;
-    async fn delete(&self, number: u32) -> anyhow::Result<(), DeleteError>;
+    async fn delete(&self, id: String) -> anyhow::Result<(), DeleteError>;
 }
 
 #[async_trait]
@@ -111,7 +113,17 @@ INSERT INTO  users (id, first_name, last_name, birthday_date, city)
     }
 
     async fn fetch_all(&self) -> anyhow::Result<Vec<DbUser>, FetchAllError> {
-        todo!()
+        let db_pool = self.db_pool.as_ref().unwrap();
+        let rec = query_as::<_, DbUser>(
+            r#"SELECT id, first_name, last_name, birthday_date, city FROM users
+            "#,
+        ).fetch_all(db_pool).await;
+        match rec {
+            Ok(users) =>
+                Ok(users)
+            ,
+            Err(_) => Err(FetchAllError::Unknown)
+        }
     }
 
     async fn get(&self, id: String) -> anyhow::Result<DbUser, FetchOneError> {
@@ -124,7 +136,7 @@ INSERT INTO  users (id, first_name, last_name, birthday_date, city)
             .await;
         match rec {
             Ok(value) => {
-                Ok( DbUser {
+                Ok(DbUser {
                     id: value.id,
                     last_name: value.last_name,
                     first_name: value.first_name,
@@ -144,16 +156,31 @@ INSERT INTO  users (id, first_name, last_name, birthday_date, city)
         todo!()
     }
 
-    async fn delete(&self, number: u32) -> anyhow::Result<(), DeleteError> {
-        todo!()
+    async fn delete(&self, id: String) -> anyhow::Result<(), DeleteError> {
+        let db_pool = self.db_pool.as_ref().unwrap();
+        let res = sqlx::query(
+            r#"DELETE FROM users WHERE id = $1"#
+        ).bind(id)
+            .execute(db_pool).await;
+        match res {
+            Ok(_) => Ok(()),
+            Err(_) => Err(DeleteError::NotFound)
+        }
     }
 }
+
+#[cfg(test)]
+impl PostgresRepository {}
 
 #[cfg(test)]
 mod tests {
     use chrono::NaiveDate;
     use random_string::generate;
     use std::borrow::Borrow;
+    use std::collections::HashMap;
+    use std::sync::Arc;
+    use serde_json::Value::Array;
+    use sqlx::{Pool, Postgres};
     use uuid::{uuid, Uuid};
     use crate::repository::user::{DbUser, FetchOneError, InsertError, PostgresRepository, Repository};
 
@@ -237,7 +264,7 @@ mod tests {
         repo.insert(user).await;
         let repo2 = PostgresRepository::new_pool(url).await.unwrap();
         let res1 = repo2.get(id).await.unwrap();
-       // assert_eq!(user_res.eq(&res1), true)
+        // assert_eq!(user_res.eq(&res1), true)
     }
 
     #[tokio::test]
@@ -249,5 +276,93 @@ mod tests {
         let res1 = repo2.get(id).await;
         let user_response = res1.err().unwrap();
         //assert_eq!(user_response, FetchOneError::NotFound)
+    }
+
+    #[tokio::test]
+    async fn list_users_work() {
+        let url = "postgres://postgres:somePassword@localhost:5432/postgres";
+        let repo = PostgresRepository::new_pool(url).await.unwrap();
+
+
+        //delete_all(repo.db_pool.clone().as_ref().unwrap()).await;
+        let users = insert_users_test().await;
+        let res = repo.fetch_all().await;
+
+        let resArray = res.unwrap();
+        let mut hashmap = HashMap::new();
+        for user in resArray {
+            hashmap.insert(user.id.clone(), user);
+        }
+
+
+
+        for expectedUser in users {
+            let a = hashmap.get(expectedUser.id.as_str()).unwrap();
+            assert_eq!(expectedUser.id, a.id);
+            assert_eq!(expectedUser.city, a.city);
+            assert_eq!(expectedUser.birthday_date, a.birthday_date);
+            assert_eq!(expectedUser.last_name, a.last_name);
+            assert_eq!(expectedUser.first_name, a.first_name);
+        }
+    }
+
+    #[tokio::test]
+    async fn delete_work() {
+        let charset = "abcdefghijkl";
+        let id = Uuid::new_v4().to_string();
+        let user = DbUser {
+            id: id.clone(),
+            last_name: generate(6, charset),
+            first_name: generate(6, charset),
+            city: generate(6, charset),
+            birthday_date: NaiveDate::from_ymd(2015, 3, 14),
+        };
+        let user_res = DbUser {
+            id: user.id.clone(),
+            last_name: user.last_name.clone(),
+            first_name: user.first_name.clone(),
+            city: user.city.clone(),
+            birthday_date: NaiveDate::from_ymd(2015, 3, 14),
+        };
+        let url = "postgres://postgres:somePassword@localhost:5432/postgres";
+        let mut repo = PostgresRepository::new_pool(url).await.unwrap();
+        repo.insert(user).await;
+        let repo2 = PostgresRepository::new_pool(url).await.unwrap();
+        let res1 = repo2.delete(id.clone()).await;
+        let repo3 = PostgresRepository::new_pool(url).await.unwrap();
+        let res2 = repo3.get(id).await;
+        assert_eq!(res1.is_ok(), true);
+        assert_eq!(res2.err().unwrap(), FetchOneError::NotFound)
+        // assert_eq!(user_res.eq(&res1), true)
+    }
+
+
+
+    async fn insert_users_test() -> Vec<DbUser> {
+        let url = "postgres://postgres:somePassword@localhost:5432/postgres";
+        let repo = PostgresRepository::new_pool(url).await.unwrap();
+        let mut users = Vec::new();
+        let charset = "abcdefghijkl";
+        for n in 1..10 {
+            let user = DbUser {
+                id: Uuid::new_v4().to_string(),
+                last_name: generate(6, charset),
+                first_name: generate(6, charset),
+                city: generate(6, charset),
+                birthday_date: NaiveDate::from_ymd(2015, 3, 14),
+            };
+
+            let res = repo.insert(user).await.unwrap();
+            users.push(res)
+        }
+        users
+    }
+
+
+
+    async fn delete_all(x: &Pool<Postgres>) {
+        sqlx::query(
+            "DELETE FROM users"
+        ).execute(x).await.unwrap();
     }
 }
