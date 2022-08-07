@@ -7,10 +7,12 @@ use crate::repository::user::Repository;
 
 pub mod create_user;
 pub mod get_user;
+pub mod delete_user;
 
 pub fn user_service(repo: &Data<PostgresRepository>) -> Scope {
     web::scope("/user")
         .route("", web::post().to(create_user::serve))
         .route("/{id}", web::get().to(get_user::serve))
+        .route("/{id}", web::delete().to(delete_user::serve))
         .app_data(repo.clone())
 }

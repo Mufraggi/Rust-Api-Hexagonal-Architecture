@@ -185,8 +185,15 @@ INSERT INTO  users (id, first_name, last_name, birthday_date, city)
         ).bind(id)
             .execute(db_pool).await;
         match res {
-            Ok(_) => Ok(()),
-            Err(_) => Err(DeleteError::NotFound)
+            Ok(e) => {
+                if (e.rows_affected() == 1) {
+                    Ok(())
+                } else {
+                    Err(DeleteError::NotFound)
+                }
+            },
+            Err(Error::RowNotFound) => Err(DeleteError::NotFound),
+            Err(_) => Err(DeleteError::Unknown)
         }
     }
 }
@@ -347,12 +354,11 @@ mod tests {
             birthday_date: NaiveDate::from_ymd(2015, 3, 14),
         };
         let url = "postgres://postgres:somePassword@localhost:5432/postgres";
-        let mut repo = PostgresRepository::new_pool(url).await.unwrap();
-        repo.insert(user).await;
-        let repo2 = PostgresRepository::new_pool(url).await.unwrap();
-        let res1 = repo2.delete(id.clone()).await;
-        let repo3 = PostgresRepository::new_pool(url).await.unwrap();
-        let res2 = repo3.get(id).await;
+        let mut repo =Data::new(PostgresRepository::new_pool(url).await.unwrap());
+        let res =repo.insert(user).await;
+        assert_eq!(res.is_ok(), true);
+        let res1 = repo.delete(id.clone()).await;
+        let res2 = repo.get(id).await;
         assert_eq!(res1.is_ok(), true);
         assert_eq!(res2.err().unwrap(), FetchOneError::NotFound)
         // assert_eq!(user_res.eq(&res1), true)
