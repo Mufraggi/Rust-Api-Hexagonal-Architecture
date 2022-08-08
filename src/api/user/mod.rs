@@ -9,6 +9,7 @@ pub mod create_user;
 pub mod get_user;
 pub mod delete_user;
 pub mod list_users;
+mod update_user;
 
 pub fn user_service(repo: &Data<PostgresRepository>) -> Scope {
     web::scope("/user")
@@ -16,5 +17,6 @@ pub fn user_service(repo: &Data<PostgresRepository>) -> Scope {
         .route("/{id}", web::get().to(get_user::serve))
         .route("", web::get().to(list_users::serve))
         .route("/{id}", web::delete().to(delete_user::serve))
+        .route("/{id}", web::put().to(update_user::serve))
         .app_data(repo.clone())
 }
