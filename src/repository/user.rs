@@ -3,11 +3,12 @@ use chrono::NaiveDate;
 use futures::future::{err, ok};
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgSeverity::Log;
-use sqlx::postgres::{PgPool, PgRow};
+use sqlx::postgres::{PgPool, PgPoolOptions, PgRow};
 use sqlx::{query, query_as, Error, FromRow, Pool, Postgres, Row};
 use std::any::TypeId;
 use std::borrow::Borrow;
 use std::fmt::Debug;
+use std::time::Duration;
 use uuid::{uuid, Uuid};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
@@ -70,13 +71,19 @@ impl<'r> FromRow<'r, PgRow> for DbUser {
 }
 
 impl PostgresRepository {
-    pub async fn new_pool(url_db: &str) -> Result<PostgresRepository, ()> {
-        let tmp = PgPool::connect(&url_db).await;
+    pub async fn new_pool(url_db: &str) -> Result<PostgresRepository, Error> {
+        //let tmp = PgPool::connect(&url_db).await;
+        let tmp = PgPoolOptions::new()
+            .max_connections(5)
+            .idle_timeout(Duration::from_millis(300))
+            .connect(&url_db).await;
         match tmp {
             Ok(value) => Ok(Self {
                 db_pool: Some(value),
             }),
-            Err(err) => Err(()),
+            Err(err) => {
+                Err(err)
+            }
         }
     }
 }
@@ -186,7 +193,7 @@ INSERT INTO  users (id, first_name, last_name, birthday_date, city)
             .execute(db_pool).await;
         match res {
             Ok(e) => {
-                if (e.rows_affected() == 1) {
+                if e.rows_affected() == 1 {
                     Ok(())
                 } else {
                     Err(DeleteError::NotFound)
@@ -256,7 +263,7 @@ mod tests {
             city: user.city.clone(),
             birthday_date: NaiveDate::from_ymd(2015, 3, 14),
         };
-        let url = "postgres://postgres:somePassword@localhost:5432/postgres";
+        let url = "postgres://postgres:somePassword@postgres:5432/postgres";
         let repo = PostgresRepository::new_pool(url).await.unwrap();
         let res = repo.insert(user).await;
         let user2 = DbUser {

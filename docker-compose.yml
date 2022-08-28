@@ -1,0 +1,28 @@
+version: "3.9"
+services:
+  web:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+     - postgres
+    networks:
+      - my-network
+  postgres:
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=somePassword
+    ports:
+      - '5432:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - my-network
+
+volumes:
+  db-data:
+
+networks:
+  my-network:

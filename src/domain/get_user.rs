@@ -27,7 +27,7 @@ pub enum Error {
 }
 
 pub async fn execute(repo: Data<PostgresRepository>, req: Request) -> Result<Response, Error> {
-    match (UserId::try_from(req.id)) {
+    match UserId::try_from(req.id) {
         Ok(userId) => {
             let res = repo.get(userId.my_to_String()).await;
             match res {
