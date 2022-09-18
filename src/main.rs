@@ -9,7 +9,5 @@ mod api;
 async fn main() -> std::io::Result<()> {
     let url = "postgres://postgres:somePassword@postgres:5432/postgres";
     let repository = PostgresRepository::new_pool(url).await.unwrap();
-    println!("zzzzzz");
-    //std::io::Result::Ok(())
     api::serve("0.0.0.0", repository).await
 }
