@@ -75,7 +75,7 @@ impl PostgresRepository {
         //let tmp = PgPool::connect(&url_db).await;
         let tmp = PgPoolOptions::new()
             .max_connections(5)
-            .idle_timeout(Duration::from_millis(300))
+            .idle_timeout(Duration::from_secs(30))
             .connect(&url_db).await;
         match tmp {
             Ok(value) => Ok(Self {
