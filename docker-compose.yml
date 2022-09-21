@@ -1,0 +1,26 @@
+version: "3.9"
+services:
+  web:
+    build:
+      dockerfile: Dockerfile
+      context: .
+      args:
+        - DATABASE_URL=postgres://postgres:somePassword@postgres:5432/postgres
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+  postgres:
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=somePassword
+    ports:
+      - '5432:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  db-data:
+

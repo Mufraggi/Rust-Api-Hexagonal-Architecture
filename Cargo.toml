@@ -6,22 +6,22 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-sqlx = { features = ["postgres", "offline", "runtime-async-std-native-tls", "chrono"] }
+sqlx = { features = ["postgres", "offline", "runtime-actix-native-tls", "chrono"] }
 anyhow = "1.0"
-chrono= {  version = "0.4.19", features = ["serde"] }
-async-std = { version = "1.8.0", features = [ "attributes"] }
+chrono = { version = "0.4.19", features = ["serde"] }
+async-std = { version = "1.8.0", features = ["attributes"] }
 futures = "0.3"
-uuid = { version ="1.1.2", features = [
+uuid = { version = "1.1.2", features = [
     "v4",
     "fast-rng",
-    "macro-diagnostics","serde"
+    "macro-diagnostics", "serde"
 ] }
 async-trait = "0.1.56"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["full"] }
 actix-web = "4"
-actix-rt = "1.0.0"
+actix-rt = "2.7.0"
 [dev-dependencies]
 random-string = "1.0.0"
 bincode = "1.3.3"
