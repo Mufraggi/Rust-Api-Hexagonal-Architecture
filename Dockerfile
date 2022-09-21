@@ -5,11 +5,9 @@ WORKDIR /usr/src/api-service
 COPY . .
 ENV DATABASE_URL=$DATABASE_URL SQLX_OFFLINE=true RUST_BACKTRACE=1
 EXPOSE 8080
-COPY sqlx-data.json .
 RUN cargo install --path .
 
 FROM gcr.io/distroless/cc-debian10
-
 
 ENV  DATABASE_URL=$DATABASE_URL
 ENV SQLX_OFFLINE=true
