@@ -9,10 +9,6 @@ RUN cargo install --path .
 
 FROM gcr.io/distroless/cc-debian10
 
-ENV  DATABASE_URL=$DATABASE_URL
-ENV SQLX_OFFLINE=true
-ENV RUST_BACKTRACE=1
-
 COPY --from=build /usr/local/cargo/bin/hexa-domain-tutorial /usr/local/bin/hexa-domain-tutorial
 
 ENTRYPOINT ["/usr/local/bin/hexa-domain-tutorial"]

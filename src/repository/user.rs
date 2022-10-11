@@ -263,7 +263,7 @@ mod tests {
             city: user.city.clone(),
             birthday_date: NaiveDate::from_ymd(2015, 3, 14),
         };
-        let url = "postgres://postgres:somePassword@postgres:5432/postgres";
+        let url = "postgres://postgres:somePassword@localhost:5432/postgres";
         let repo = PostgresRepository::new_pool(url).await.unwrap();
         let res = repo.insert(user).await;
         let user2 = DbUser {

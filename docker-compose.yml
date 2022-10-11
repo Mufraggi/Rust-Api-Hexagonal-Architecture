@@ -10,6 +10,9 @@ services:
       - "8080:8080"
     depends_on:
       - postgres
+    environment:
+      - DATABASE_URL=postgres://postgres:somePassword@postgres:5432/postgres
+      - URL_DOMAIN=0.0.0.0
   postgres:
     image: postgres:14.1-alpine
     restart: always
