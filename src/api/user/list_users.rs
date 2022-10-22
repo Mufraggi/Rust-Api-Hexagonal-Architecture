@@ -15,7 +15,7 @@ pub struct Response {
     pub birthday_date: NaiveDate,
     pub city: String,
 }
-
+#[tracing::instrument]
 pub async fn serve(repo: Data<PostgresRepository>) -> impl Responder {
 
     match list_users::execute(repo).await {

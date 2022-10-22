@@ -39,7 +39,7 @@ pub enum DeleteError {
     Unknown,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct PostgresRepository {
     db_pool: Option<Pool<Postgres>>,
 }

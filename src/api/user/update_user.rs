@@ -28,7 +28,7 @@ pub struct Request {
     pub birthday_date: String,
     pub city: String,
 }
-
+#[tracing::instrument]
 pub async fn serve(repo: Data<PostgresRepository>, path: web::Path<Param>, req: web::Json<Request>) -> impl Responder {
     let param = Param { id: path.into_inner().id };
     let req = update_user::Request {

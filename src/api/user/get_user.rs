@@ -19,7 +19,7 @@ pub struct Response {
     pub birthday_date: NaiveDate,
     pub city: String,
 }
-
+#[tracing::instrument]
 pub async fn serve(repo: Data<PostgresRepository>, path: web::Path<Param>) -> impl Responder {
     let req = get_user::Request { id: path.into_inner().id };
     match get_user::execute(repo, req).await {

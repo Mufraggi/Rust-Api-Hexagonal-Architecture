@@ -33,8 +33,9 @@ pub enum Error {
     Conflict,
     Unknown,
 }
-
+#[tracing::instrument]
 pub async fn execute(repo: Data<PostgresRepository>, req: Request) -> Result<Response, Error> {
+    tracing::span!(tracing::Level::TRACE, "juste before the db call");
     match (
         FirstName::try_from(req.first_name),
         LastName::try_from(req.last_name),
