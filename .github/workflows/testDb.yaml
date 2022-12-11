@@ -44,6 +44,8 @@ jobs:
 
     - name: install sqlx-cli
       run: cargo install sqlx-cli --no-default-features --features native-tls,postgres
+      env:
+        DATABASE_URL="postgres://postgres:somePassword@localhost:5432/postgres"
 
 
     - name: sqlx create db
