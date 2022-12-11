@@ -50,9 +50,13 @@ jobs:
 
     - name: sqlx create db
       run: sqlx db create
+      env:
+        DATABASE_URL: postgres://postgres:somePassword@localhost:5432/postgres
 
     - name: sqlx migrate
       run: sqlx migrate run
+      env:
+        DATABASE_URL: postgres://postgres:somePassword@localhost:5432/postgres
 
 
 
