@@ -34,30 +34,10 @@ jobs:
         submodules: recursive
 
     - name: Show Working directory
-      run: cd hexa-sql-db
-
-    - name: Show Working directory
-      run: ls
-
-    - name: set env
-      run: export DATABASE_URL="postgres://postgres:somePassword@localhost:5432/postgres"
-
-    - name: cargo version
-      run: cargo version
-
-    - name: install sqlx-cli
-      run: cargo install sqlx-cli --no-default-features --features native-tls,postgres
-      env:
-        DATABASE_URL: postgres://postgres:somePassword@localhost:5432/postgres
-
-
-    - name: sqlx create db
-      run: sqlx db create
-      env:
-        DATABASE_URL: postgres://postgres:somePassword@localhost:5432/postgres
-
-    - name: sqlx migrate
-      run: sqlx migrate run
+      run: cd hexa-sql-db &&
+        cargo install sqlx-cli --no-default-features --features native-tls,postgres &&
+        sqlx db create &&
+        sqlx migrate run
       env:
         DATABASE_URL: postgres://postgres:somePassword@localhost:5432/postgres
 
