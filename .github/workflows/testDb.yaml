@@ -34,7 +34,19 @@ jobs:
         submodules: recursive
 
     - name: Show Working directory
-      run: ls
+      run: cd hexa-sql-db
+
+    - name: set env
+      run: export DATABASE_URL="postgres://postgres:somePassword@localhost:5432/postgres"
+
+    - name: cargo version
+      run: cd hexa-sql-db
+
+    - name: cargo version
+      run: sqlx db create
+
+    - name: cargo version
+      run: sqlx migrate run
 
 
 
