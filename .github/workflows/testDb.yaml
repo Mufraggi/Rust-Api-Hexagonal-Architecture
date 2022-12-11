@@ -27,6 +27,7 @@ jobs:
           - 5432:5432
 
     steps:
+    - name: clone db repo
     - uses: actions/checkout@main
       with:
         repository: Mufraggi/hexa-sql-db
@@ -34,7 +35,7 @@ jobs:
         submodules: recursive
 
     - name: Show Working directory
-        run: ls
+      run: ls
 
 
 
