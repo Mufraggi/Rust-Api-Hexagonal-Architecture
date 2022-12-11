@@ -40,12 +40,16 @@ jobs:
       run: export DATABASE_URL="postgres://postgres:somePassword@localhost:5432/postgres"
 
     - name: cargo version
-      run: cd hexa-sql-db
+      run: cargo version
 
-    - name: cargo version
+    - name: install sqlx-cli
+      run: cargo install sqlx-cli --no-default-features --features native-tls,postgres
+
+
+    - name: sqlx create db
       run: sqlx db create
 
-    - name: cargo version
+    - name: sqlx migrate
       run: sqlx migrate run
 
 
