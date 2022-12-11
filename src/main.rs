@@ -16,7 +16,7 @@ async fn main() -> std::io::Result<()> {
     //let url = "postgres://postgres:somePassword@localhost:5432/postgres";
     let repository = PostgresRepository::new_pool(&config.url_postgres).await.unwrap();
     //api::serve("localhost", repository).await
-    let telemetry_client = TelemetryClient::init();
+    TelemetryClient::init();
     api::serve(&config.url_domain, repository).await
 
 }

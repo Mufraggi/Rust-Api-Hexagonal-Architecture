@@ -14,13 +14,6 @@ pub struct TelemetryClient {
 
 impl TelemetryClient {
     pub fn init()  {
-
-        /*let request_metrics: RequestMetrics<dyn Send + Clone> = RequestMetrics::new(
-            opentelemetry::global::meter("user_actix_service"),
-            None,
-            None,
-        );*/
-
         global::set_text_map_propagator(TraceContextPropagator::new());
         let tracer = opentelemetry_jaeger::new_pipeline()
             .with_service_name("users_app")

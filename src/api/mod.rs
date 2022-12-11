@@ -22,7 +22,6 @@ pub async fn serve(
         App::new()
             .wrap(Logger::default())
             .wrap(RequestTracing::new())
-            //.wrap(telemetry_client.request_metrics.clone())
             .service(web::scope("/health").route("", web::get().to(health)))
             .service(user_service(&repo))
     })
