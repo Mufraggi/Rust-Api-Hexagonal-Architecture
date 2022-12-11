@@ -27,7 +27,7 @@ jobs:
           - 5432:5432
 
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@main
       with:
         repository: Mufraggi/hexa-sql-db
         path: ./hexa-sql-db
