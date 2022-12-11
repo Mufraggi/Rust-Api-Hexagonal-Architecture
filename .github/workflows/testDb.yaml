@@ -36,6 +36,9 @@ jobs:
     - name: Show Working directory
       run: cd hexa-sql-db
 
+    - name: Show Working directory
+      run: ls
+
     - name: set env
       run: export DATABASE_URL="postgres://postgres:somePassword@localhost:5432/postgres"
 
