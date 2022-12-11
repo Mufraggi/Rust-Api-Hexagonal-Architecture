@@ -26,7 +26,7 @@ pub struct Response {
     pub birthday_date: NaiveDate,
     pub city: String,
 }
-
+#[tracing::instrument]
 pub async fn serve(repo: Data< PostgresRepository>, req: web::Json<Request>) -> impl Responder {
     let req = create_user::Request {
         first_name: req.0.first_name,
@@ -34,6 +34,9 @@ pub async fn serve(repo: Data< PostgresRepository>, req: web::Json<Request>) -> 
         birthday_date: req.0.birthday_date,
         city: req.0.city,
     };
+    tracing::info!("create user");
+    tracing::span!(tracing::Level::INFO, "juste before the db call");
+
     match create_user::execute(repo, req).await {
         Ok(create_user::Response {
                id,

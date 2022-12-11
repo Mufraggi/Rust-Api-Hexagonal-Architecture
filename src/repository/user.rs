@@ -39,7 +39,7 @@ pub enum DeleteError {
     Unknown,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct PostgresRepository {
     db_pool: Option<Pool<Postgres>>,
 }
@@ -104,6 +104,7 @@ pub trait Repository {
 
 #[async_trait]
 impl Repository for PostgresRepository {
+    #[tracing::instrument]
     async fn insert(&self, db_user: DbUser) -> anyhow::Result<DbUser, InsertError> {
         let db_pool = self.db_pool.as_ref().unwrap();
         let rec = query!(

@@ -8,8 +8,9 @@ struct Response {
 }
 
 
-
+#[tracing::instrument]
 pub async fn health() -> impl Responder {
+    tracing::info!("just before the ok");
     HttpResponse::Ok()
         .content_type("application/json")
         .body(serde_json::to_string(&Response {
