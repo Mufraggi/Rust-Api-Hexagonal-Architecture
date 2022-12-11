@@ -33,6 +33,9 @@ jobs:
         path: ./hexa-sql-db
         submodules: recursive
 
+    - name: Show Working directory
+        run: ls
+
 
 
 
