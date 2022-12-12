@@ -1,5 +1,5 @@
-name: PostgreSQL Service Example
-on: push
+name: Unit test
+on: [push, pull_request]
 
 jobs:
   # Label of the runner job
@@ -33,7 +33,7 @@ jobs:
         path: ./hexa-sql-db
         submodules: recursive
 
-    - name: Show Working directory
+    - name: Move in repo hexa-sql, run install sqlx , create db and play migration
       run: cd hexa-sql-db &&
         cargo install sqlx-cli --no-default-features --features native-tls,postgres &&
         sqlx db create &&
@@ -44,12 +44,8 @@ jobs:
     - name: Check out repository code
       uses: actions/checkout@v3
 
-    - name: Show Working directory
+    - name: Run test
       run: cargo test
-
-
-    - name: Show Working directory
-      run: ls
 
 
 
