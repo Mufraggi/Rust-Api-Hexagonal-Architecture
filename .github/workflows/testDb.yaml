@@ -1,0 +1,53 @@
+name: Unit test
+on: [push, pull_request]
+
+jobs:
+  # Label of the runner job
+  runner-job:
+    # You must use a Linux environment when using service containers or container jobs
+    runs-on: ubuntu-latest
+
+    # Service containers to run with `runner-job`
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: somePassword
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
+
+    steps:
+    - uses: actions/checkout@main
+      with:
+        repository: Mufraggi/hexa-sql-db
+        path: ./hexa-sql-db
+        submodules: recursive
+
+    - name: Move in repo hexa-sql, run install sqlx , create db and play migration
+      run: cd hexa-sql-db &&
+        cargo install sqlx-cli --no-default-features --features native-tls,postgres &&
+        sqlx db create &&
+        sqlx migrate run
+      env:
+        DATABASE_URL: postgres://postgres:somePassword@localhost:5432/postgres
+
+    - name: Check out repository code
+      uses: actions/checkout@v3
+
+    - name: Run test
+      run: cargo test
+
+
+
+
+
