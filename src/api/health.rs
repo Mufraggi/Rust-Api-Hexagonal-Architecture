@@ -36,4 +36,8 @@ mod tests {
         let result:Response = test::read_body_json(res).await;
         assert_eq!(result,(Response{ status: "OK".parse().unwrap()}));
     }
+    #[test]
+    async fn test_fail() {
+        assert_eq!(true,false);
+    }
 }
