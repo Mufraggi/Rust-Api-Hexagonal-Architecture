@@ -34,6 +34,6 @@ jobs:
         ECR_REPOSITORY: user_service_tutorial
         IMAGE_TAG: service_user_image
       run:
-        echo ${{ steps.login-ecr.outputs.registry }} &&
-        docker build -t public.ecr.aws/m8a8s0t7/user_service_tutorial:$IMAGE_TAG . &&
-        docker push public.ecr.aws/m8a8s0t7/user_service_tutorial:$IMAGE_TAG
+        |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
