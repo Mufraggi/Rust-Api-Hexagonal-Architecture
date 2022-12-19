@@ -17,10 +17,6 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v2
 
-    - name: test
-      run: echo secrets.AWS_ACCESS_KEY_ID
-
-
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -37,6 +33,6 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: user_service_tutorial
         IMAGE_TAG: service_user
-      run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+      run:
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG . &&
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
