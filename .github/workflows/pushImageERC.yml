@@ -34,5 +34,6 @@ jobs:
         ECR_REPOSITORY: user_service_tutorial
         IMAGE_TAG: service_user_image
       run:
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG . &&
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker build -t user_service_tutorial . &&
+        docker tag user_service_tutorial:latest public.ecr.aws/m8a8s0t7/user_service_tutorial:latest &&
+        docker push public.ecr.aws/m8a8s0t7/user_service_tutorial:latest
