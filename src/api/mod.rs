@@ -15,13 +15,12 @@ use std::sync::Arc;
 pub async fn serve(
     url: &str,
     repo: PostgresRepository,
-//    telemetry_client: TelemetryClient,
 ) -> std::io::Result<()> {
     let repo = Data::new(repo);
     HttpServer::new(move || {
         App::new()
             .wrap(Logger::default())
-            .wrap(RequestTracing::new())
+           // .wrap(RequestTracing::new())
             .service(web::scope("/health").route("", web::get().to(health)))
             .service(user_service(&repo))
     })

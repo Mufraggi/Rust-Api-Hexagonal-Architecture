@@ -8,7 +8,7 @@ struct Response {
 }
 
 
-#[tracing::instrument]
+//#[tracing::instrument]
 pub async fn health() -> impl Responder {
     tracing::info!("just before the ok");
     HttpResponse::Ok()

@@ -26,7 +26,7 @@ pub struct Response {
     pub birthday_date: NaiveDate,
     pub city: String,
 }
-#[tracing::instrument]
+//#[tracing::instrument]
 pub async fn serve(repo: Data< PostgresRepository>, req: web::Json<Request>) -> impl Responder {
     let req = create_user::Request {
         first_name: req.0.first_name,

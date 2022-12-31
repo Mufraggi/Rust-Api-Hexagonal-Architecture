@@ -10,7 +10,7 @@ use serde::Serialize;
 pub struct Param {
     pub id: String,
 }
-#[tracing::instrument]
+//#[tracing::instrument]
 pub async fn serve(repo: Data<PostgresRepository>, path: web::Path<Param>) -> impl Responder {
     let req = Request { id: path.into_inner().id };
     match delete_user::execute(repo, req).await {
